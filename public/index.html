@@ -9,33 +9,75 @@
     <!-- Favicon -->
     <link rel="icon" href="%PUBLIC_URL%/icon-192.png" />
 
-    <!-- Fontes e estilos básicos -->
+    <!-- Fonte moderna -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
     <style>
+      /* Reset básico */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
       body {
         font-family: 'Inter', sans-serif;
-        margin: 0;
-        background-color: #f0f2f5;
+        background: linear-gradient(135deg, #4f46e5, #3b82f6);
+        color: #fff;
         display: flex;
         justify-content: center;
         align-items: center;
-        height: 100vh;
+        min-height: 100vh;
+        padding: 20px;
       }
+
       #root {
         width: 100%;
         max-width: 480px;
-        padding: 20px;
-      }
-      .loading {
+        background-color: rgba(255,255,255,0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 30px 20px;
         text-align: center;
-        color: #4f46e5;
+      }
+
+      .logo {
+        width: 80px;
+        height: 80px;
+        margin-bottom: 20px;
+      }
+
+      .loading {
+        font-size: 18px;
         font-weight: 600;
+        color: #f3f4f6;
+        animation: pulse 1.5s infinite;
+      }
+
+      @keyframes pulse {
+        0%, 100% { opacity: 0.6; }
+        50% { opacity: 1; }
+      }
+
+      @media (max-width: 400px) {
+        #root {
+          padding: 20px 15px;
+        }
+        .logo {
+          width: 60px;
+          height: 60px;
+        }
+        .loading {
+          font-size: 16px;
+        }
       }
     </style>
   </head>
+
   <body>
     <noscript>Você precisa habilitar o JavaScript para rodar este app.</noscript>
     <div id="root">
+      <img src="%PUBLIC_URL%/icon-192.png" alt="NorInvest Logo" class="logo" />
       <div class="loading">Carregando NoralieInvest...</div>
     </div>
   </body>
