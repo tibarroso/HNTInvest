@@ -30,9 +30,7 @@ function Cotacoes({ carteira }) {
     return () => clearInterval(interval);
   }, [carteira]);
 
-  if (dados.length === 0) {
-    return <p>Nenhuma cotação para mostrar.</p>;
-  }
+  if (dados.length === 0) return <p>Nenhuma cotação para mostrar.</p>;
 
   return (
     <div className="p-4 flex flex-wrap gap-4 justify-center">
@@ -75,7 +73,6 @@ function Proventos({ carteira }) {
 
       for (const a of ativosMonitorados) {
         try {
-          // Primeiro tentamos ações
           let res = await axios.get(`https://brapi.dev/api/quote/${a.nome}?modules=dividends`);
           const r = res.data.results[0];
 
@@ -83,7 +80,6 @@ function Proventos({ carteira }) {
           if (r.dividendsData?.cashDividends) {
             dividendos = r.dividendsData.cashDividends;
           } else {
-            // Tenta FIIs
             res = await axios.get(`https://brapi.dev/api/funds/${a.nome}/dividends`);
             dividendos = res.data.results || [];
           }
@@ -108,9 +104,7 @@ function Proventos({ carteira }) {
     fetchProventos();
   }, [carteira]);
 
-  if (Object.keys(divs).length === 0) {
-    return <p>Nenhum provento encontrado.</p>;
-  }
+  if (Object.keys(divs).length === 0) return <p>Nenhum provento encontrado.</p>;
 
   return (
     <div>
@@ -135,11 +129,27 @@ function App() {
   const [carteira, setCarteira] = useState([]);
   const [novaAcao, setNovaAcao] = useState("");
 
+  // Carrega carteira do localStorage
+  useEffect(() => {
+    const stored = JSON.parse(localStorage.getItem("carteira") || "[]");
+    setCarteira(stored);
+  }, []);
+
+  // Salva carteira no localStorage sempre que mudar
+  useEffect(() => {
+    localStorage.setItem("carteira", JSON.stringify(carteira));
+  }, [carteira]);
+
   const adicionarAcao = () => {
     if (novaAcao.trim() && !carteira.some(a => a.nome === novaAcao.trim().toUpperCase())) {
       setCarteira([
         ...carteira,
-        { nome: novaAcao.trim().toUpperCase(), qtComprada: 1, dtCompra: new Date().toISOString().slice(0,10), monitorar: true }
+        {
+          nome: novaAcao.trim().toUpperCase(),
+          qtComprada: 1,
+          dtCompra: new Date().toISOString().slice(0,10),
+          monitorar: true
+        }
       ]);
       setNovaAcao("");
     }
