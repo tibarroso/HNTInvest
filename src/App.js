@@ -4,15 +4,35 @@ import axios from "axios";
 
 function App() {
   const [aba, setAba] = useState("cotacoes");
+
+  // Estado da carteira com campos completos
   const [carteira, setCarteira] = useState([]);
   const [novaAcao, setNovaAcao] = useState("");
+  const [qtComprada, setQtComprada] = useState("");
+  const [dtCompra, setDtCompra] = useState("");
+  const [monitora, setMonitora] = useState("SIM");
+
   const BRAPI_TOKEN = "SEU_TOKEN_AQUI"; // Substitua pelo seu token da BRAPI
 
-  const adicionarAcao = () => {
-    if (novaAcao.trim() && !carteira.some(a => a.nome === novaAcao.trim().toUpperCase())) {
-      setCarteira([...carteira, { nome: novaAcao.trim().toUpperCase(), monitorar: true }]);
-      setNovaAcao("");
-    }
+  // Adiciona ativo completo
+  const adicionarAcaoDetalhada = () => {
+    if (!novaAcao.trim()) return;
+
+    setCarteira([
+      ...carteira,
+      {
+        nome: novaAcao.trim().toUpperCase(),
+        qtComprada: qtComprada || 0,
+        dtCompra: dtCompra || new Date().toISOString().split("T")[0],
+        monitorar: monitora === "SIM"
+      }
+    ]);
+
+    // Limpa campos
+    setNovaAcao("");
+    setQtComprada("");
+    setDtCompra("");
+    setMonitora("SIM");
   };
 
   const toggleMonitorar = (index) => {
@@ -67,36 +87,65 @@ function App() {
       </header>
 
       <main className="flex-1 p-4">
-        {aba === "cotacoes" && <CotacoesPWA carteira={carteira.filter(a => a.monitorar)} />}
+        {/* Cotações apenas dos ativos monitorados */}
+        {aba === "cotacoes" && (
+          <CotacoesPWA carteira={carteira.filter(a => a.monitorar)} />
+        )}
 
+        {/* Aba Carteira com cadastro detalhado */}
         {aba === "carteira" && (
           <div className="space-y-4">
-            <div className="flex gap-2">
+            <h2 className="font-bold text-lg">Adicionar Ativo</h2>
+            <div className="flex flex-col gap-2 md:flex-row">
               <input
                 type="text"
-                placeholder="Digite o código da ação (ex: PETR4)"
-                className="flex-1 p-2 border rounded"
+                placeholder="Ativo (ex: MXRF11)"
+                className="p-2 border rounded flex-1"
                 value={novaAcao}
                 onChange={(e) => setNovaAcao(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && adicionarAcao()}
               />
+              <input
+                type="number"
+                placeholder="QtComprada"
+                className="p-2 border rounded flex-1"
+                value={qtComprada}
+                onChange={(e) => setQtComprada(e.target.value)}
+              />
+              <input
+                type="date"
+                className="p-2 border rounded flex-1"
+                value={dtCompra}
+                onChange={(e) => setDtCompra(e.target.value)}
+              />
+              <select
+                className="p-2 border rounded flex-1"
+                value={monitora}
+                onChange={(e) => setMonitora(e.target.value)}
+              >
+                <option value="SIM">SIM</option>
+                <option value="NAO">NAO</option>
+              </select>
               <button
                 className="px-4 py-2 bg-blue-600 text-white rounded"
-                onClick={adicionarAcao}
+                onClick={adicionarAcaoDetalhada}
               >
                 Adicionar
               </button>
             </div>
 
-            {carteira.length === 0 && <p className="text-gray-600">Nenhuma ação na carteira.</p>}
+            {carteira.length === 0 && (
+              <p className="text-gray-600">Nenhuma ação na carteira.</p>
+            )}
 
-            <ul className="space-y-2">
+            <ul className="space-y-2 mt-4">
               {carteira.map((acao, index) => (
                 <li
                   key={index}
                   className="flex justify-between items-center p-2 bg-white shadow rounded"
                 >
-                  <span className="font-semibold">{acao.nome}</span>
+                  <span className="font-semibold">
+                    {acao.nome} • Qt: {acao.qtComprada} • Dt: {acao.dtCompra} • Monitora: {acao.monitorar ? "SIM" : "NAO"}
+                  </span>
                   <div className="flex items-center gap-2">
                     <label className="flex items-center gap-1">
                       <input
@@ -119,6 +168,7 @@ function App() {
           </div>
         )}
 
+        {/* Aba Proventos */}
         {aba === "proventos" && (
           <div className="space-y-4">
             {proventos.length === 0 && (
