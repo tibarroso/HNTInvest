@@ -6,14 +6,14 @@ body {
 }
 
 header {
-  background-color: rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(10px);
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 12px 20px;
   position: sticky;
   top: 0;
+  background-color: rgba(0,0,0,0.3);
+  backdrop-filter: blur(10px);
   z-index: 1000;
 }
 
@@ -27,11 +27,11 @@ nav button {
   border: none;
   color: #fff;
   font-weight: 600;
+  margin-left: 15px;
   cursor: pointer;
 }
 
 nav button:hover {
-  color: #f3f4f6;
   text-decoration: underline;
 }
 
@@ -40,7 +40,6 @@ nav button:hover {
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: 20px;
   padding: 20px;
-  justify-items: center;
 }
 
 .card {
@@ -48,8 +47,6 @@ nav button:hover {
   background-color: rgba(255, 255, 255, 0.12);
   border-radius: 15px;
   padding: 15px 20px;
-  width: 100%;
-  max-width: 260px;
   text-align: center;
   transition: transform 0.2s, box-shadow 0.2s;
 }
@@ -59,13 +56,19 @@ nav button:hover {
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
 }
 
+.card img {
+  width: 50px;
+  height: 50px;
+  margin-bottom: 10px;
+}
+
 .card .name {
   font-weight: 700;
   font-size: 16px;
   margin-bottom: 5px;
-  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .card .price {
