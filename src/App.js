@@ -6,46 +6,42 @@ function Cotacoes({ carteira }) {
 
   useEffect(() => {
     const fetchCotacoes = async () => {
-      if (carteira.length === 0) {
-        setDados([]);
-        return;
-      }
-
       const resultados = [];
+
       for (const ativo of carteira) {
         try {
           let r;
           if (ativo.nome.includes("FII")) {
-            // Buscar dados do FII do FundsExplorer
-            const res = await axios.get(`https://www.fundsexplorer.com.br/funds/${ativo.nome.toLowerCase()}`);
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(res.data, 'text/html');
+            // Busca FIIs do FundsExplorer
+            const res = await axios.get(`https://api.allorigins.win/get?url=${encodeURIComponent(`https://www.fundsexplorer.com.br/funds/${ativo.nome}`)}`);
+            const html = res.data.contents;
 
-            const precoEl = doc.querySelector('div#fund-price'); // Ajuste de acordo com a estrutura do site
-            const divYieldEl = doc.querySelector('div#dividend-yield'); 
-            const preco = precoEl ? parseFloat(precoEl.textContent.replace('R$', '').replace(',', '.')) : 0;
-            const dividendYield = divYieldEl ? parseFloat(divYieldEl.textContent.replace('%', '').replace(',', '.')) : 0;
+            // Extrair preço do HTML
+            const regex = /<span class="value">R\$\s*([\d,.]+)<\/span>/;
+            const match = html.match(regex);
+            const preco = match ? parseFloat(match[1].replace(".", "").replace(",", ".")) : 0;
 
             r = {
               symbol: ativo.nome,
               shortName: ativo.nome,
               regularMarketPrice: preco,
               regularMarketChange: 0,
-              regularMarketChangePercent: dividendYield,
-              regularMarketDayHigh: 0,
-              regularMarketDayLow: 0,
+              regularMarketChangePercent: 0,
+              regularMarketDayHigh: preco,
+              regularMarketDayLow: preco,
               priceEarnings: null,
               earningsPerShare: null,
               regularMarketVolume: 0,
               logourl: null
             };
           } else {
-            // Buscar dados da B3 para ações
+            // Ações normais via BRAPI
             const res = await axios.get(`https://brapi.dev/api/quote/${ativo.nome}`);
             r = res.data.results[0];
           }
 
           if (r) resultados.push(r);
+
         } catch (err) {
           console.error("Erro ao buscar cotação:", ativo.nome, err);
         }
@@ -101,17 +97,29 @@ function Proventos({ carteira }) {
   useEffect(() => {
     const fetchProventos = async () => {
       const dados = {};
+
       for (const a of carteira) {
         try {
           let dividendos = [];
-          if (!a.nome.includes("FII")) {
+
+          if (a.nome.includes("FII")) {
+            // FIIs: extrair do FundsExplorer
+            const res = await axios.get(`https://api.allorigins.win/get?url=${encodeURIComponent(`https://www.fundsexplorer.com.br/funds/${a.nome}`)}`);
+            const html = res.data.contents;
+
+            const regex = /<tr class="[^"]*">[\s\S]*?<td class="[^"]*">(\d{2}\/\d{2}\/\d{4})<\/td>[\s\S]*?<td class="[^"]*">R\$\s*([\d,.]+)<\/td>/g;
+            let match;
+            while ((match = regex.exec(html)) !== null) {
+              dividendos.push({
+                paymentDate: match[1],
+                rate: parseFloat(match[2].replace(".", "").replace(",", ".")),
+              });
+            }
+          } else {
+            // Ações normais: BRAPI dividends
             const res = await axios.get(`https://brapi.dev/api/quote/${a.nome}?modules=dividends`);
             const r = res.data.results[0];
             dividendos = r.dividendsData?.cashDividends || [];
-          } else {
-            const res = await axios.get(`https://www.fundsexplorer.com.br/funds/${a.nome.toLowerCase()}`);
-            // Extrair dividendos do HTML (ajuste conforme estrutura do site)
-            dividendos = []; 
           }
 
           dividendos.forEach(d => {
@@ -124,6 +132,7 @@ function Proventos({ carteira }) {
               isFII: a.nome.includes("FII"),
             });
           });
+
         } catch (err) {
           console.warn("Erro ao buscar proventos:", a.nome, err);
         }
