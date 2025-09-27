@@ -24,27 +24,52 @@
         font-family: 'Inter', sans-serif;
         background: linear-gradient(135deg, #4f46e5, #3b82f6);
         color: #fff;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* Cabeçalho fixo */
+      header {
+        background-color: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        padding: 15px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+      }
+
+      header h1 {
+        font-size: 20px;
+        font-weight: 700;
+      }
+
+      nav a {
+        margin-left: 15px;
+        font-weight: 600;
+        color: #f3f4f6;
+        text-decoration: none;
+        transition: color 0.2s;
+      }
+
+      nav a:hover {
+        color: #ffffff;
+      }
+
+      /* Área principal */
+      #root {
+        flex: 1;
+        padding: 20px;
         display: flex;
         justify-content: center;
-        align-items: center;
-        min-height: 100vh;
-        padding: 20px;
-      }
-
-      #root {
-        width: 100%;
-        max-width: 480px;
-        background-color: rgba(255,255,255,0.1);
-        backdrop-filter: blur(10px);
-        border-radius: 20px;
-        padding: 30px 20px;
-        text-align: center;
-      }
-
-      .logo {
-        width: 80px;
-        height: 80px;
-        margin-bottom: 20px;
+        align-items: flex-start;
+        flex-wrap: wrap;
+        gap: 20px;
+        max-width: 960px;
+        margin: 0 auto;
       }
 
       .loading {
@@ -59,16 +84,14 @@
         50% { opacity: 1; }
       }
 
-      @media (max-width: 400px) {
-        #root {
-          padding: 20px 15px;
+      @media (max-width: 480px) {
+        header {
+          flex-direction: column;
+          align-items: flex-start;
         }
-        .logo {
-          width: 60px;
-          height: 60px;
-        }
-        .loading {
-          font-size: 16px;
+        nav a {
+          margin-left: 0;
+          margin-top: 5px;
         }
       }
     </style>
@@ -76,8 +99,17 @@
 
   <body>
     <noscript>Você precisa habilitar o JavaScript para rodar este app.</noscript>
+
+    <header>
+      <h1>NoralieInvest</h1>
+      <nav>
+        <a href="#cotacoes">Cotações</a>
+        <a href="#carteira">Carteira</a>
+        <a href="#proventos">Proventos</a>
+      </nav>
+    </header>
+
     <div id="root">
-      <img src="%PUBLIC_URL%/icon-192.png" alt="NorInvest Logo" class="logo" />
       <div class="loading">Carregando NoralieInvest...</div>
     </div>
   </body>
