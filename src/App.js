@@ -14,39 +14,48 @@ function Cotacoes({ carteira }) {
       const resultados = [];
       for (const ativo of carteira) {
         try {
-          const res = await axios.get(`https://brapi.dev/api/quote/${ativo.nome}`);
-          const r = res.data.results[0];
-          if (r) {
-            resultados.push(r);
-          } else {
-            resultados.push({
+          let r;
+          if (ativo.nome.includes("FII")) {
+            // Buscar dados do FII do FundsExplorer
+            const res = await axios.get(`https://www.fundsexplorer.com.br/funds/${ativo.nome.toLowerCase()}`);
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(res.data, 'text/html');
+
+            const precoEl = doc.querySelector('div#fund-price'); // Ajuste de acordo com a estrutura do site
+            const divYieldEl = doc.querySelector('div#dividend-yield'); 
+            const preco = precoEl ? parseFloat(precoEl.textContent.replace('R$', '').replace(',', '.')) : 0;
+            const dividendYield = divYieldEl ? parseFloat(divYieldEl.textContent.replace('%', '').replace(',', '.')) : 0;
+
+            r = {
               symbol: ativo.nome,
               shortName: ativo.nome,
-              regularMarketPrice: 0,
+              regularMarketPrice: preco,
               regularMarketChange: 0,
-              regularMarketChangePercent: 0,
+              regularMarketChangePercent: dividendYield,
               regularMarketDayHigh: 0,
               regularMarketDayLow: 0,
               priceEarnings: null,
               earningsPerShare: null,
               regularMarketVolume: 0,
               logourl: null
-            });
+            };
+          } else {
+            // Buscar dados da B3 para ações
+            const res = await axios.get(`https://brapi.dev/api/quote/${ativo.nome}`);
+            r = res.data.results[0];
           }
+
+          if (r) resultados.push(r);
         } catch (err) {
           console.error("Erro ao buscar cotação:", ativo.nome, err);
         }
       }
+
       setDados(resultados);
     };
 
     fetchCotacoes();
-    const interval = setInterval(() => {
-      // Atualiza apenas os ativos marcados como monitorar
-      const ativosParaAtualizar = carteira.filter(a => a.monitorar).map(a => a.nome);
-      if (ativosParaAtualizar.length > 0) fetchCotacoes();
-    }, 30000);
-
+    const interval = setInterval(fetchCotacoes, 30000); // Atualiza a cada 30s
     return () => clearInterval(interval);
   }, [carteira]);
 
@@ -94,15 +103,15 @@ function Proventos({ carteira }) {
       const dados = {};
       for (const a of carteira) {
         try {
-          let res = await axios.get(`https://brapi.dev/api/quote/${a.nome}?modules=dividends`);
-          const r = res.data.results[0];
-
           let dividendos = [];
-          if (r.dividendsData?.cashDividends) {
-            dividendos = r.dividendsData.cashDividends;
+          if (!a.nome.includes("FII")) {
+            const res = await axios.get(`https://brapi.dev/api/quote/${a.nome}?modules=dividends`);
+            const r = res.data.results[0];
+            dividendos = r.dividendsData?.cashDividends || [];
           } else {
-            res = await axios.get(`https://brapi.dev/api/funds/${a.nome}/dividends`);
-            dividendos = res.data.results || [];
+            const res = await axios.get(`https://www.fundsexplorer.com.br/funds/${a.nome.toLowerCase()}`);
+            // Extrair dividendos do HTML (ajuste conforme estrutura do site)
+            dividendos = []; 
           }
 
           dividendos.forEach(d => {
@@ -154,13 +163,11 @@ function App() {
   const [carteira, setCarteira] = useState([]);
   const [novaAcao, setNovaAcao] = useState("");
 
-  // Carrega carteira do localStorage
   useEffect(() => {
     const stored = JSON.parse(localStorage.getItem("carteira") || "[]");
     setCarteira(stored);
   }, []);
 
-  // Salva carteira no localStorage sempre que mudar
   useEffect(() => {
     localStorage.setItem("carteira", JSON.stringify(carteira));
   }, [carteira]);
