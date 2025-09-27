@@ -1,4 +1,40 @@
-/* Grid moderno para ativos */
+body {
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+  background: linear-gradient(135deg, #4f46e5, #3b82f6);
+  color: #fff;
+}
+
+header {
+  background-color: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+header h1 {
+  font-weight: 700;
+  font-size: 22px;
+}
+
+nav button {
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+nav button:hover {
+  color: #f3f4f6;
+  text-decoration: underline;
+}
+
 .main-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -7,7 +43,6 @@
   justify-items: center;
 }
 
-/* Cartões mais organizados */
 .card {
   backdrop-filter: blur(12px);
   background-color: rgba(255, 255, 255, 0.12);
@@ -24,7 +59,6 @@
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
 }
 
-/* Nome e preço */
 .card .name {
   font-weight: 700;
   font-size: 16px;
@@ -40,11 +74,6 @@
   margin: 5px 0;
 }
 
-/* Mudança de preço */
-.card .change {
-  font-weight: 600;
-}
-
 .card .change.up {
   color: #4ade80;
 }
@@ -53,7 +82,6 @@
   color: #f87171;
 }
 
-/* Informações detalhadas */
 .card .info {
   font-size: 12px;
   margin-top: 10px;
@@ -63,7 +91,14 @@
   text-align: left;
 }
 
-/* Responsividade */
+footer {
+  padding: 10px 20px;
+  text-align: center;
+  font-size: 12px;
+  color: #f3f4f6;
+  background-color: rgba(0,0,0,0.3);
+}
+
 @media (max-width: 480px) {
   .main-grid {
     grid-template-columns: 1fr;
