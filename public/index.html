@@ -5,38 +5,27 @@
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>NoralieInvest</title>
-
-    <!-- Favicon -->
     <link rel="icon" href="%PUBLIC_URL%/icon-192.png" />
-
-    <!-- Fonte moderna -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 
     <style>
-      /* Reset básico */
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
-
       body {
         font-family: 'Inter', sans-serif;
         background: linear-gradient(135deg, #4f46e5, #3b82f6);
         color: #fff;
-        min-height: 100vh;
+        margin: 0;
         display: flex;
         flex-direction: column;
+        min-height: 100vh;
       }
 
-      /* Cabeçalho fixo */
       header {
-        background-color: rgba(255, 255, 255, 0.1);
+        background-color: rgba(255,255,255,0.1);
         backdrop-filter: blur(10px);
-        padding: 15px 20px;
         display: flex;
         justify-content: space-between;
         align-items: center;
+        padding: 15px 20px;
         position: sticky;
         top: 0;
         z-index: 1000;
@@ -52,39 +41,64 @@
         font-weight: 600;
         color: #f3f4f6;
         text-decoration: none;
-        transition: color 0.2s;
       }
 
       nav a:hover {
-        color: #ffffff;
+        color: #fff;
       }
 
-      /* Área principal */
-      #root {
+      main {
         flex: 1;
         padding: 20px;
         display: flex;
-        justify-content: center;
-        align-items: flex-start;
         flex-wrap: wrap;
+        justify-content: center;
         gap: 20px;
-        max-width: 960px;
-        margin: 0 auto;
       }
 
-      .loading {
-        font-size: 18px;
+      .card {
+        background-color: rgba(255,255,255,0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 15px;
+        width: 250px;
+        text-align: center;
+      }
+
+      .card img {
+        width: 50px;
+        height: 50px;
+        margin-bottom: 10px;
+      }
+
+      .card .price {
+        font-size: 24px;
         font-weight: 600;
+        margin: 5px 0;
+      }
+
+      .card .change.up {
+        color: #4ade80;
+      }
+      .card .change.down {
+        color: #f87171;
+      }
+
+      .card .info {
+        font-size: 12px;
+        margin-top: 10px;
+        text-align: left;
+      }
+
+      footer {
+        padding: 10px 20px;
+        text-align: center;
+        font-size: 12px;
         color: #f3f4f6;
-        animation: pulse 1.5s infinite;
+        background-color: rgba(0,0,0,0.1);
       }
 
-      @keyframes pulse {
-        0%, 100% { opacity: 0.6; }
-        50% { opacity: 1; }
-      }
-
-      @media (max-width: 480px) {
+      @media(max-width: 480px){
         header {
           flex-direction: column;
           align-items: flex-start;
@@ -98,8 +112,6 @@
   </head>
 
   <body>
-    <noscript>Você precisa habilitar o JavaScript para rodar este app.</noscript>
-
     <header>
       <h1>NoralieInvest</h1>
       <nav>
@@ -109,8 +121,25 @@
       </nav>
     </header>
 
-    <div id="root">
-      <div class="loading">Carregando NoralieInvest...</div>
-    </div>
+    <main id="root">
+      <!-- Exemplo de cartão de ação -->
+      <div class="card">
+        <img src="%PUBLIC_URL%/icon-192.png" alt="PETR4" />
+        <div class="name">PETROBRAS PN N2</div>
+        <div class="price">R$ 32.25</div>
+        <div class="change down">-0.11 (-0.34%)</div>
+        <div class="info">
+          <div>Máx/Dia: R$ 32.74</div>
+          <div>Mín/Dia: R$ 32.15</div>
+          <div>P/L: 5.42</div>
+          <div>EPS: 6.00</div>
+          <div>Volume: 27.784.600</div>
+        </div>
+      </div>
+    </main>
+
+    <footer>
+      Desenvolvedor: Helquys Ande • +55 869 81250-154
+    </footer>
   </body>
 </html>
