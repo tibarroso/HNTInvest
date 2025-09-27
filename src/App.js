@@ -222,11 +222,13 @@ function App() {
                     <input
                       type="number"
                       min="1"
-                      className="w-16 border rounded p-1 text-center"
+                      step="1"
+                      className="w-16 border rounded p-1 text-center appearance-number"
                       value={acao.qtComprada}
                       onChange={(e) => {
                         const updated = [...carteira];
-                        updated[index].qtComprada = parseInt(e.target.value) || 1;
+                        let val = parseInt(e.target.value);
+                        updated[index].qtComprada = val < 1 || isNaN(val) ? 1 : val;
                         setCarteira(updated);
                       }}
                     /> 
