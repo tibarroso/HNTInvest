@@ -37,11 +37,14 @@ function Cotacoes({ carteira }) {
       {dados.map((stock) => {
         const changeClass = stock.regularMarketChange >= 0 ? "text-green-600" : "text-red-600";
         const changeSign = stock.regularMarketChange >= 0 ? "+" : "";
+        const isFII = stock.symbol.includes("FII");
 
         return (
           <div
             key={stock.symbol}
-            className="bg-white shadow-md rounded-xl p-4 w-64 hover:scale-105 transition-transform"
+            className={`shadow-md rounded-xl p-4 w-64 hover:scale-105 transition-transform ${
+              isFII ? "bg-yellow-100 text-gray-800" : "bg-white text-gray-900"
+            }`}
           >
             <img src={stock.logourl || "%PUBLIC_URL%/icon-192.png"} alt={stock.symbol} className="w-12 h-12 mx-auto mb-2" />
             <div className="text-center font-bold text-lg">{stock.shortName}</div>
@@ -91,6 +94,7 @@ function Proventos({ carteira }) {
               ticker: a.nome,
               valor: (d.rate * (a.qtComprada || 1)).toFixed(2),
               pagamento: d.paymentDate,
+              isFII: a.nome.includes("FII"),
             });
           });
         } catch (err) {
@@ -113,7 +117,10 @@ function Proventos({ carteira }) {
           <h3 className="font-semibold">{mes}</h3>
           <ul>
             {lista.map((p, i) => (
-              <li key={i} className="border-b py-1">
+              <li
+                key={i}
+                className={`border-b py-1 ${p.isFII ? "bg-yellow-100 text-gray-800" : "bg-white text-gray-900"}`}
+              >
                 {p.ticker} → R$ {p.valor} (pagamento {p.pagamento})
               </li>
             ))}
@@ -180,7 +187,6 @@ function App() {
 
       <main className="flex-1 p-4">
         {aba === "cotacoes" && <Cotacoes carteira={carteira} />}
-
         {aba === "carteira" && (
           <div className="space-y-4">
             <div className="flex gap-2">
@@ -206,9 +212,13 @@ function App() {
               {carteira.map((acao, index) => (
                 <li
                   key={index}
-                  className="flex justify-between items-center p-2 bg-white shadow rounded"
+                  className={`flex justify-between items-center p-2 rounded shadow ${
+                    acao.nome.includes("FII") ? "bg-yellow-100 text-gray-800" : "bg-white text-gray-900"
+                  }`}
                 >
-                  <span className="font-semibold">{acao.nome} • Qt: {acao.qtComprada} • Dt: {acao.dtCompra}</span>
+                  <span className="font-semibold">
+                    {acao.nome} • Qt: {acao.qtComprada} • Dt: {acao.dtCompra}
+                  </span>
                   <div className="flex items-center gap-2">
                     <label className="flex items-center gap-1">
                       <input
@@ -230,7 +240,6 @@ function App() {
             </ul>
           </div>
         )}
-
         {aba === "proventos" && <Proventos carteira={carteira} />}
       </main>
 
