@@ -5,7 +5,7 @@ import axios from "axios";
 function App() {
   const [aba, setAba] = useState("cotacoes");
 
-  // Estado da carteira com campos completos
+  // Carteira detalhada
   const [carteira, setCarteira] = useState([]);
   const [novaAcao, setNovaAcao] = useState("");
   const [qtComprada, setQtComprada] = useState("");
@@ -28,29 +28,32 @@ function App() {
       }
     ]);
 
-    // Limpa campos
     setNovaAcao("");
     setQtComprada("");
     setDtCompra("");
     setMonitora("SIM");
   };
 
+  // Toggle monitoramento
   const toggleMonitorar = (index) => {
     const updated = [...carteira];
     updated[index].monitorar = !updated[index].monitorar;
     setCarteira(updated);
   };
 
+  // Remover ativo
   const removerAcao = (index) => {
     const updated = [...carteira];
     updated.splice(index, 1);
     setCarteira(updated);
   };
 
-  // Função para buscar proventos da BRAPI
+  // Buscar dividendos via BRAPI
   const obterDividendos = async (ticker) => {
     try {
-      const res = await axios.get(`https://brapi.dev/api/dividendos/${ticker}?token=${BRAPI_TOKEN}`);
+      const res = await axios.get(
+        `https://brapi.dev/api/dividendos/${ticker}?token=${BRAPI_TOKEN}`
+      );
       return res.data.results || [];
     } catch (err) {
       console.error("Erro ao buscar dividendos:", err);
@@ -87,12 +90,12 @@ function App() {
       </header>
 
       <main className="flex-1 p-4">
-        {/* Cotações apenas dos ativos monitorados */}
+        {/* Cotações */}
         {aba === "cotacoes" && (
           <CotacoesPWA carteira={carteira.filter(a => a.monitorar)} />
         )}
 
-        {/* Aba Carteira com cadastro detalhado */}
+        {/* Carteira */}
         {aba === "carteira" && (
           <div className="space-y-4">
             <h2 className="font-bold text-lg">Adicionar Ativo</h2>
@@ -168,7 +171,7 @@ function App() {
           </div>
         )}
 
-        {/* Aba Proventos */}
+        {/* Proventos */}
         {aba === "proventos" && (
           <div className="space-y-4">
             {proventos.length === 0 && (
