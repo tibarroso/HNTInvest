@@ -216,8 +216,21 @@ function App() {
                     acao.nome.includes("FII") ? "bg-yellow-100 text-gray-800" : "bg-white text-gray-900"
                   }`}
                 >
-                  <span className="font-semibold">
-                    {acao.nome} • Qt: {acao.qtComprada} • Dt: {acao.dtCompra}
+                  <span className="font-semibold flex items-center gap-2">
+                    {acao.nome} • 
+                    Qt: 
+                    <input
+                      type="number"
+                      min="1"
+                      className="w-16 border rounded p-1 text-center"
+                      value={acao.qtComprada}
+                      onChange={(e) => {
+                        const updated = [...carteira];
+                        updated[index].qtComprada = parseInt(e.target.value) || 1;
+                        setCarteira(updated);
+                      }}
+                    /> 
+                    • Dt: {new Date(acao.dtCompra).toLocaleDateString("pt-BR")}
                   </span>
                   <div className="flex items-center gap-2">
                     <label className="flex items-center gap-1">
