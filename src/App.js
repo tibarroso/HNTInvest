@@ -6,27 +6,47 @@ function Cotacoes({ carteira }) {
 
   useEffect(() => {
     const fetchCotacoes = async () => {
-      const ativosMonitorados = carteira.filter(a => a.monitorar).map(a => a.nome);
-      if (ativosMonitorados.length === 0) {
+      if (carteira.length === 0) {
         setDados([]);
         return;
       }
 
       const resultados = [];
-      for (const ticker of ativosMonitorados) {
+      for (const ativo of carteira) {
         try {
-          const res = await axios.get(`https://brapi.dev/api/quote/${ticker}`);
+          const res = await axios.get(`https://brapi.dev/api/quote/${ativo.nome}`);
           const r = res.data.results[0];
-          resultados.push(r);
+          if (r) {
+            resultados.push(r);
+          } else {
+            resultados.push({
+              symbol: ativo.nome,
+              shortName: ativo.nome,
+              regularMarketPrice: 0,
+              regularMarketChange: 0,
+              regularMarketChangePercent: 0,
+              regularMarketDayHigh: 0,
+              regularMarketDayLow: 0,
+              priceEarnings: null,
+              earningsPerShare: null,
+              regularMarketVolume: 0,
+              logourl: null
+            });
+          }
         } catch (err) {
-          console.error("Erro ao buscar cotação:", ticker, err);
+          console.error("Erro ao buscar cotação:", ativo.nome, err);
         }
       }
       setDados(resultados);
     };
 
     fetchCotacoes();
-    const interval = setInterval(fetchCotacoes, 30000); // Atualiza a cada 30s
+    const interval = setInterval(() => {
+      // Atualiza apenas os ativos marcados como monitorar
+      const ativosParaAtualizar = carteira.filter(a => a.monitorar).map(a => a.nome);
+      if (ativosParaAtualizar.length > 0) fetchCotacoes();
+    }, 30000);
+
     return () => clearInterval(interval);
   }, [carteira]);
 
@@ -72,9 +92,7 @@ function Proventos({ carteira }) {
   useEffect(() => {
     const fetchProventos = async () => {
       const dados = {};
-      const ativosMonitorados = carteira.filter(a => a.monitorar);
-
-      for (const a of ativosMonitorados) {
+      for (const a of carteira) {
         try {
           let res = await axios.get(`https://brapi.dev/api/quote/${a.nome}?modules=dividends`);
           const r = res.data.results[0];
@@ -154,7 +172,7 @@ function App() {
         {
           nome: novaAcao.trim().toUpperCase(),
           qtComprada: 1,
-          dtCompra: new Date().toISOString().slice(0,10),
+          dtCompra: new Date().toLocaleDateString("pt-BR"),
           monitorar: true
         }
       ]);
@@ -171,6 +189,12 @@ function App() {
   const removerAcao = (index) => {
     const updated = [...carteira];
     updated.splice(index, 1);
+    setCarteira(updated);
+  };
+
+  const atualizarQt = (index, qt) => {
+    const updated = [...carteira];
+    updated[index].qtComprada = qt < 1 ? 1 : qt;
     setCarteira(updated);
   };
 
@@ -216,24 +240,20 @@ function App() {
                     acao.nome.includes("FII") ? "bg-yellow-100 text-gray-800" : "bg-white text-gray-900"
                   }`}
                 >
-                  <span className="font-semibold flex items-center gap-2">
-                    {acao.nome} • 
-                    Qt: 
-                    <input
-                      type="number"
-                      min="1"
-                      step="1"
-                      className="w-16 border rounded p-1 text-center appearance-number"
-                      value={acao.qtComprada}
-                      onChange={(e) => {
-                        const updated = [...carteira];
-                        let val = parseInt(e.target.value);
-                        updated[index].qtComprada = val < 1 || isNaN(val) ? 1 : val;
-                        setCarteira(updated);
-                      }}
-                    /> 
-                    • Dt: {new Date(acao.dtCompra).toLocaleDateString("pt-BR")}
-                  </span>
+                  <div className="flex flex-col gap-1">
+                    <span className="font-semibold">
+                      {acao.nome} • Qt: 
+                      <input
+                        type="number"
+                        min="1"
+                        step="1"
+                        value={acao.qtComprada}
+                        onChange={(e) => atualizarQt(index, parseInt(e.target.value))}
+                        className="ml-1 w-16 p-1 border rounded"
+                      /> 
+                      • Dt: {acao.dtCompra}
+                    </span>
+                  </div>
                   <div className="flex items-center gap-2">
                     <label className="flex items-center gap-1">
                       <input
