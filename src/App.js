@@ -1,85 +1,132 @@
 import React, { useState, useEffect } from "react";
-import CotacoesPWA from "./CotacoesPWA";
 import axios from "axios";
+
+function Cotacoes({ carteira }) {
+  const [dados, setDados] = useState([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        if (!carteira.length) return;
+        const tickers = carteira.map(a => a.nome).join(",");
+        const res = await axios.get(`https://brapi.dev/api/quote/${tickers}`);
+        setDados(res.data.results || []);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    fetchData();
+    const interval = setInterval(fetchData, 30000);
+    return () => clearInterval(interval);
+  }, [carteira]);
+
+  return (
+    <div className="flex flex-wrap gap-4 justify-center">
+      {dados.map((stock) => {
+        const acao = carteira.find(a => a.nome === stock.symbol);
+        const changeClass = stock.regularMarketChange >= 0 ? "text-green-600" : "text-red-600";
+        const changeSign = stock.regularMarketChange >= 0 ? "+" : "";
+
+        return (
+          <div key={stock.symbol} className="bg-white shadow-md rounded-xl p-4 w-64">
+            <img src={stock.logourl} alt={stock.symbol} className="w-12 h-12 mx-auto mb-2" />
+            <div className="text-center font-bold text-lg">{stock.shortName}</div>
+            <div className="text-center text-2xl font-semibold">R$ {stock.regularMarketPrice.toFixed(2)}</div>
+            <div className={`text-center ${changeClass}`}>
+              {changeSign}{stock.regularMarketChange.toFixed(2)} ({changeSign}{stock.regularMarketChangePercent.toFixed(2)}%)
+            </div>
+            <div className="text-sm mt-2 text-left">
+              <div>QtComprada: {acao?.qtComprada || 0}</div>
+              <div>Total Investido: R$ {acao ? (acao.qtComprada * stock.regularMarketPrice).toFixed(2) : "0.00"}</div>
+              <div>Máx/Dia: R$ {stock.regularMarketDayHigh.toFixed(2)}</div>
+              <div>Mín/Dia: R$ {stock.regularMarketDayLow.toFixed(2)}</div>
+              <div>P/L: {stock.priceEarnings.toFixed(2)}</div>
+              <div>EPS: {stock.earningsPerShare.toFixed(2)}</div>
+              <div>Volume: {stock.regularMarketVolume.toLocaleString()}</div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 function App() {
   const [aba, setAba] = useState("cotacoes");
-
-  // Carteira detalhada
   const [carteira, setCarteira] = useState([]);
   const [novaAcao, setNovaAcao] = useState("");
   const [qtComprada, setQtComprada] = useState("");
   const [dtCompra, setDtCompra] = useState("");
   const [monitora, setMonitora] = useState("SIM");
 
-  const BRAPI_TOKEN = "SEU_TOKEN_AQUI"; // Substitua pelo seu token da BRAPI
-
-  // Adiciona ativo completo
-  const adicionarAcaoDetalhada = () => {
+  // Adicionar ativo
+  const adicionarAcao = () => {
     if (!novaAcao.trim()) return;
-
     setCarteira([
       ...carteira,
       {
         nome: novaAcao.trim().toUpperCase(),
-        qtComprada: qtComprada || 0,
+        qtComprada: parseFloat(qtComprada) || 0,
         dtCompra: dtCompra || new Date().toISOString().split("T")[0],
         monitorar: monitora === "SIM"
       }
     ]);
-
     setNovaAcao("");
     setQtComprada("");
     setDtCompra("");
     setMonitora("SIM");
   };
 
-  // Toggle monitoramento
   const toggleMonitorar = (index) => {
     const updated = [...carteira];
     updated[index].monitorar = !updated[index].monitorar;
     setCarteira(updated);
   };
 
-  // Remover ativo
   const removerAcao = (index) => {
     const updated = [...carteira];
     updated.splice(index, 1);
     setCarteira(updated);
   };
 
-  // Buscar dividendos via BRAPI
-  const obterDividendos = async (ticker) => {
-    try {
-      const res = await axios.get(
-        `https://brapi.dev/api/dividendos/${ticker}?token=${BRAPI_TOKEN}`
-      );
-      return res.data.results || [];
-    } catch (err) {
-      console.error("Erro ao buscar dividendos:", err);
-      return [];
-    }
-  };
-
-  const [proventos, setProventos] = useState([]);
+  // Proventos agrupados por mês
+  const [divs, setDivs] = useState({});
 
   useEffect(() => {
-    const fetchProventos = async () => {
-      const provs = [];
-      for (const acao of carteira) {
-        if (acao.monitorar) {
-          const divs = await obterDividendos(acao.nome);
-          provs.push({ nome: acao.nome, dividendos: divs });
+    async function carregarProventos() {
+      let dados = {};
+      const monitorados = carteira.filter(a => a.monitorar);
+      for (let a of monitorados) {
+        try {
+          const resp = await fetch(`https://brapi.dev/api/quote/${a.nome}?modules=dividends`);
+          const json = await resp.json();
+          if (json.results && json.results[0].dividendsData) {
+            json.results[0].dividendsData.cashDividends.forEach((d) => {
+              const mes = new Date(d.paymentDate).toLocaleDateString("pt-BR", {
+                month: "2-digit",
+                year: "numeric",
+              });
+              if (!dados[mes]) dados[mes] = [];
+              dados[mes].push({
+                ticker: a.nome,
+                valor: (d.rate * a.qtComprada).toFixed(2),
+                pagamento: d.paymentDate,
+              });
+            });
+          }
+        } catch (e) {
+          console.warn("Erro ao buscar proventos", e);
         }
       }
-      setProventos(provs);
-    };
+      setDivs(dados);
+    }
 
-    fetchProventos();
+    if (carteira.length) carregarProventos();
   }, [carteira]);
 
   return (
-    <div className="min-h-screen bg-gray-100 text-gray-900 flex flex-col">
+    <div className="min-h-screen bg-gray-100 flex flex-col">
       <header className="p-4 bg-gray-800 text-white flex justify-between items-center">
         <h1 className="text-xl font-bold">NoralieInvest</h1>
         <nav className="flex gap-4">
@@ -90,12 +137,8 @@ function App() {
       </header>
 
       <main className="flex-1 p-4">
-        {/* Cotações */}
-        {aba === "cotacoes" && (
-          <CotacoesPWA carteira={carteira.filter(a => a.monitorar)} />
-        )}
+        {aba === "cotacoes" && <Cotacoes carteira={carteira.filter(a => a.monitorar)} />}
 
-        {/* Carteira */}
         {aba === "carteira" && (
           <div className="space-y-4">
             <h2 className="font-bold text-lg">Adicionar Ativo</h2>
@@ -130,40 +173,26 @@ function App() {
               </select>
               <button
                 className="px-4 py-2 bg-blue-600 text-white rounded"
-                onClick={adicionarAcaoDetalhada}
+                onClick={adicionarAcao}
               >
                 Adicionar
               </button>
             </div>
 
-            {carteira.length === 0 && (
-              <p className="text-gray-600">Nenhuma ação na carteira.</p>
-            )}
+            {carteira.length === 0 && <p className="text-gray-600">Nenhuma ação na carteira.</p>}
 
             <ul className="space-y-2 mt-4">
               {carteira.map((acao, index) => (
-                <li
-                  key={index}
-                  className="flex justify-between items-center p-2 bg-white shadow rounded"
-                >
+                <li key={index} className="flex justify-between items-center p-2 bg-white shadow rounded">
                   <span className="font-semibold">
                     {acao.nome} • Qt: {acao.qtComprada} • Dt: {acao.dtCompra} • Monitora: {acao.monitorar ? "SIM" : "NAO"}
                   </span>
                   <div className="flex items-center gap-2">
                     <label className="flex items-center gap-1">
-                      <input
-                        type="checkbox"
-                        checked={acao.monitorar}
-                        onChange={() => toggleMonitorar(index)}
-                      />
+                      <input type="checkbox" checked={acao.monitorar} onChange={() => toggleMonitorar(index)} />
                       Monitorar
                     </label>
-                    <button
-                      className="text-red-500 font-bold"
-                      onClick={() => removerAcao(index)}
-                    >
-                      ✕
-                    </button>
+                    <button className="text-red-500 font-bold" onClick={() => removerAcao(index)}>✕</button>
                   </div>
                 </li>
               ))}
@@ -171,25 +200,18 @@ function App() {
           </div>
         )}
 
-        {/* Proventos */}
         {aba === "proventos" && (
           <div className="space-y-4">
-            {proventos.length === 0 && (
-              <p className="text-gray-600">Nenhuma ação monitorada com dividendos disponíveis.</p>
-            )}
-            {proventos.map((acao) => (
-              <div key={acao.nome} className="p-4 bg-white rounded shadow">
-                <h2 className="font-bold">{acao.nome}</h2>
-                <ul className="mt-2">
-                  {acao.dividendos.length > 0 ? (
-                    acao.dividendos.map((div, i) => (
-                      <li key={i} className="text-gray-800">
-                        {div.tipo}: R$ {div.valor} • {div.dataPagamento}
-                      </li>
-                    ))
-                  ) : (
-                    <li className="text-gray-500">Nenhum provento disponível.</li>
-                  )}
+            {Object.keys(divs).length === 0 && <p className="text-gray-600">Nenhum provento encontrado.</p>}
+            {Object.entries(divs).map(([mes, lista]) => (
+              <div key={mes} className="mb-4 p-4 bg-white rounded shadow">
+                <h3 className="font-semibold">{mes}</h3>
+                <ul>
+                  {lista.map((p, i) => (
+                    <li key={i} className="border-b py-1">
+                      {p.ticker} → R$ {p.valor} (pagamento {p.pagamento})
+                    </li>
+                  ))}
                 </ul>
               </div>
             ))}
