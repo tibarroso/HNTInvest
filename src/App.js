@@ -41,28 +41,55 @@ function Cotacoes({ carteira }) {
             });
 // Buscar preço real do FII no Google Finance
 const url = `https://www.google.com/finance/quote/${ativo.nome}:BVMF`;
-const res = await axios.get(url);
-const $ = cheerio.load(res.data);
 
-// Extrair preço atual do FII
-const priceText = $('div.YMlKec.fxKbKc').first().text().trim();
-const price = priceText
-  ? parseFloat(priceText.replace('R$', '').replace(/\./g, '').replace(',', '.'))
-  : null;
+try {
+  const res = await axios.get(url);
+  const $ = cheerio.load(res.data);
 
-resultados.push({
-  symbol: ativo.nome,
-  shortName: ativo.nome,
-  regularMarketPrice: price,
-  regularMarketChange: null,
-  regularMarketChangePercent: null,
-  regularMarketDayHigh: null,
-  regularMarketDayLow: null,
-  priceEarnings: null,
-  earningsPerShare: null,
-  regularMarketVolume: null,
-  logourl: null,
-});         
+  // Extrair preço atual do FII
+  const priceText = $('div.YMlKec.fxKbKc').first().text().trim();
+
+  // Se não encontrar preço, price será null
+  const price = priceText
+    ? parseFloat(
+        priceText
+          .replace('R$', '')     // Remove símbolo R$
+          .replace(/\./g, '')    // Remove pontos de milhar
+          .replace(',', '.')     // Troca vírgula decimal por ponto
+          .trim()
+      )
+    : null;
+
+  resultados.push({
+    symbol: ativo.nome,
+    shortName: ativo.nome,
+    regularMarketPrice: price,
+    regularMarketChange: null,
+    regularMarketChangePercent: null,
+    regularMarketDayHigh: null,
+    regularMarketDayLow: null,
+    priceEarnings: null,
+    earningsPerShare: null,
+    regularMarketVolume: null,
+    logourl: null,
+  });
+
+} catch (error) {
+  console.error(`Erro ao buscar preço para ${ativo.nome}:`, error);
+  resultados.push({
+    symbol: ativo.nome,
+    shortName: ativo.nome,
+    regularMarketPrice: null,
+    regularMarketChange: null,
+    regularMarketChangePercent: null,
+    regularMarketDayHigh: null,
+    regularMarketDayLow: null,
+    priceEarnings: null,
+    earningsPerShare: null,
+    regularMarketVolume: null,
+    logourl: null,
+  });
+}        
           } else {
             // Ações via brapi.dev
             const res = await axios.get(`https://brapi.dev/api/quote/${ativo.nome}`);
