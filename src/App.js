@@ -47,32 +47,34 @@ function Cotacoes({ carteira }) {
     };
 
     fetchCotacoes();
-    const interval = setInterval(fetchCotacoes, 30000); // Atualiza a cada 30s
+    const interval = setInterval(fetchCotacoes, 30000);
     return () => clearInterval(interval);
   }, [carteira]);
 
   if (dados.length === 0) return <p>Nenhuma cotação para mostrar.</p>;
 
   return (
-    <div className="main-grid">
+    <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
       {dados.map((stock) => {
-        const changeClass = stock.regularMarketChange >= 0 ? "up" : "down";
+        const changeClass = stock.regularMarketChange >= 0 ? "text-green-600" : "text-red-600";
         const changeSign = stock.regularMarketChange >= 0 ? "+" : "";
 
         return (
-          <div key={stock.symbol} className="card">
-            <img src={stock.logourl || "%PUBLIC_URL%/icon-192.png"} alt={stock.symbol} />
-            <div className="name">{stock.shortName}</div>
-            <div className="price">R$ {stock.regularMarketPrice?.toFixed(2)}</div>
-            <div className={`change ${changeClass}`}>
+          <div key={stock.symbol} className="p-4 rounded-xl shadow bg-white hover:shadow-lg transition">
+            <div className="flex items-center gap-2 mb-2">
+              <img src={stock.logourl || "%PUBLIC_URL%/icon-192.png"} alt={stock.symbol} className="w-8 h-8 rounded" />
+              <span className="font-semibold text-gray-800">{stock.shortName}</span>
+            </div>
+            <div className="text-xl font-bold">R$ {stock.regularMarketPrice?.toFixed(2)}</div>
+            <div className={`text-sm font-semibold ${changeClass}`}>
               {changeSign}{stock.regularMarketChange?.toFixed(2)} ({changeSign}{stock.regularMarketChangePercent?.toFixed(2)}%)
             </div>
-            <div className="info">
-              <div>Máx/Dia: {stock.regularMarketDayHigh?.toFixed(2)}</div>
-              <div>Mín/Dia: {stock.regularMarketDayLow?.toFixed(2)}</div>
-              {stock.priceEarnings && <div>P/L: {stock.priceEarnings.toFixed(2)}</div>}
-              {stock.earningsPerShare && <div>EPS: {stock.earningsPerShare.toFixed(2)}</div>}
-              {stock.regularMarketVolume && <div>Volume: {stock.regularMarketVolume?.toLocaleString()}</div>}
+            <div className="text-sm text-gray-600 mt-2 space-y-1">
+              <div>📈 Máx/Dia: {stock.regularMarketDayHigh?.toFixed(2)}</div>
+              <div>📉 Mín/Dia: {stock.regularMarketDayLow?.toFixed(2)}</div>
+              {stock.priceEarnings && <div>📊 P/L: {stock.priceEarnings.toFixed(2)}</div>}
+              {stock.earningsPerShare && <div>💵 EPS: {stock.earningsPerShare.toFixed(2)}</div>}
+              {stock.regularMarketVolume && <div>🔄 Volume: {stock.regularMarketVolume?.toLocaleString()}</div>}
             </div>
           </div>
         );
@@ -138,7 +140,7 @@ function Proventos({ carteira }) {
           <h3 className="font-semibold">{mes}</h3>
           <ul>
             {lista.map((p, i) => (
-              <li key={i} className={`border-b py-1 ${p.isFII ? "bg-yellow-100 text-gray-800" : "bg-white text-gray-900"}`}>
+              <li key={i} className={`border-b py-1 px-2 rounded ${p.isFII ? "bg-yellow-100 text-gray-800" : "bg-white text-gray-900"}`}>
                 {p.ticker} → R$ {p.valor} (pagamento {p.pagamento})
               </li>
             ))}
