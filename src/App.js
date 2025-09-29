@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import cheerio from "cheerio";
 
 function Cotacoes({ carteira }) {
   const [dados, setDados] = useState([]);
@@ -12,18 +13,27 @@ function Cotacoes({ carteira }) {
       }
 
       const resultados = [];
+
       for (const ativo of carteira) {
         try {
-          if (ativo.nome.endsWith("11")) { // Detecta FIIs
-            // Cotação simulada (substitua por API real se desejar)
+          if (ativo.nome.endsWith("11")) {
+            // Buscar preço real do FII no Google Finance
+            const url = `https://www.google.com/finance/quote/${ativo.nome}:BVMF`;
+            const res = await axios.get(url);
+            const $ = cheerio.load(res.data);
+
+            // Extrair preço atual do FII
+            const priceText = $('div[data-last-price]').attr('data-last-price');
+            const price = priceText ? parseFloat(priceText.replace(',', '.')) : null;
+
             resultados.push({
               symbol: ativo.nome,
               shortName: ativo.nome,
-              regularMarketPrice: 100, // valor simulado
-              regularMarketChange: 0.5, // valor simulado
-              regularMarketChangePercent: 0.5, // valor simulado
-              regularMarketDayHigh: 101,
-              regularMarketDayLow: 99,
+              regularMarketPrice: price,
+              regularMarketChange: null,
+              regularMarketChangePercent: null,
+              regularMarketDayHigh: null,
+              regularMarketDayLow: null,
               priceEarnings: null,
               earningsPerShare: null,
               regularMarketVolume: null,
@@ -62,14 +72,8 @@ function Cotacoes({ carteira }) {
             <div className="name">{stock.shortName}</div>
             <div className="price">R$ {stock.regularMarketPrice?.toFixed(2)}</div>
             <div className={`change ${changeClass}`}>
-              {changeSign}{stock.regularMarketChange?.toFixed(2)} ({changeSign}{stock.regularMarketChangePercent?.toFixed(2)}%)
-            </div>
-            <div className="info">
-              <div>Máx/Dia: {stock.regularMarketDayHigh?.toFixed(2)}</div>
-              <div>Mín/Dia: {stock.regularMarketDayLow?.toFixed(2)}</div>
-              {stock.priceEarnings && <div>P/L: {stock.priceEarnings.toFixed(2)}</div>}
-              {stock.earningsPerShare && <div>EPS: {stock.earningsPerShare.toFixed(2)}</div>}
-              {stock.regularMarketVolume && <div>Volume: {stock.regularMarketVolume?.toLocaleString()}</div>}
+              {stock.regularMarketChange != null &&
+                `${changeSign}${stock.regularMarketChange?.toFixed(2)} (${changeSign}${stock.regularMarketChangePercent?.toFixed(2)}%)`}
             </div>
           </div>
         );
@@ -87,8 +91,8 @@ function Proventos({ carteira }) {
 
       for (const a of carteira) {
         try {
-          if (a.nome.endsWith("11")) { // FIIs
-            // Dividendos simulados (substitua pelos reais)
+          if (a.nome.endsWith("11")) {
+            // Dividendos simulados para FIIs
             const dividendosSimulados = [
               { paymentDate: "2025-09-29", value: 0.50 },
               { paymentDate: "2025-10-30", value: 0.52 },
@@ -104,9 +108,7 @@ function Proventos({ carteira }) {
                 isFII: true
               });
             });
-
           } else {
-            // Ações via brapi.dev
             const res = await axios.get(`https://brapi.dev/api/quote/${a.nome}?modules=dividends`);
             const r = res.data.results[0];
             let dividendos = r.dividendsData?.cashDividends || [];
