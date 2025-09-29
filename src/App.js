@@ -18,27 +18,51 @@ function Cotacoes({ carteira }) {
         try {
           if (ativo.nome.endsWith("11")) {
             // Buscar preço real do FII no Google Finance
-            const url = `https://www.google.com/finance/quote/${ativo.nome}:BVMF`;
-            const res = await axios.get(url);
-            const $ = cheerio.load(res.data);
+          //  const url = `https://www.google.com/finance/quote/${ativo.nome}:BVMF`;
+          //  const res = await axios.get(url);
+          //  const $ = cheerio.load(res.data);
 
             // Extrair preço atual do FII
-              const priceText = $('div[data-last-price]').attr('data-last-price');
-              const price = priceText ? parseFloat(priceText.replace(',', '.')) : null;
+         //     const priceText = $('div[data-last-price]').attr('data-last-price');
+       //       const price = priceText ? parseFloat(priceText.replace(',', '.')) : null;
                 
-            resultados.push({
-              symbol: ativo.nome,
-              shortName: ativo.nome,
-              regularMarketPrice: price,
-              regularMarketChange: null,
-              regularMarketChangePercent: null,
-              regularMarketDayHigh: null,
-              regularMarketDayLow: null,
-              priceEarnings: null,
-              earningsPerShare: null,
-              regularMarketVolume: null,
-              logourl: null,
+       //     resultados.push({
+       //       symbol: ativo.nome,
+       //       shortName: ativo.nome,
+      //        regularMarketPrice: price,
+     //         regularMarketChange: null,
+      //        regularMarketChangePercent: null,
+   //          regularMarketDayHigh: null,
+    //          regularMarketDayLow: null,
+    //          priceEarnings: null,
+    //          earningsPerShare: null,
+  //            regularMarketVolume: null,
+    //          logourl: null,
             });
+// Buscar preço real do FII no Google Finance
+const url = `https://www.google.com/finance/quote/${ativo.nome}:BVMF`;
+const res = await axios.get(url);
+const $ = cheerio.load(res.data);
+
+// Extrair preço atual do FII
+const priceText = $('div.YMlKec.fxKbKc').first().text().trim();
+const price = priceText
+  ? parseFloat(priceText.replace('R$', '').replace(/\./g, '').replace(',', '.'))
+  : null;
+
+resultados.push({
+  symbol: ativo.nome,
+  shortName: ativo.nome,
+  regularMarketPrice: price,
+  regularMarketChange: null,
+  regularMarketChangePercent: null,
+  regularMarketDayHigh: null,
+  regularMarketDayLow: null,
+  priceEarnings: null,
+  earningsPerShare: null,
+  regularMarketVolume: null,
+  logourl: null,
+});         
           } else {
             // Ações via brapi.dev
             const res = await axios.get(`https://brapi.dev/api/quote/${ativo.nome}`);
