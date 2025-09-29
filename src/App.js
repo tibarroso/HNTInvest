@@ -23,12 +23,9 @@ function Cotacoes({ carteira }) {
             const $ = cheerio.load(res.data);
 
             // Extrair preço atual do FII
-          //  const priceText = $('div[data-last-price]').attr('data-last-price');
-          //  const price = priceText ? parseFloat(priceText.replace(',', '.')) : null;
-              const priceText = $('div:contains("R$")').first().text();
-              const priceMatch = priceText.match(/R\$\s*([\d.,]+)/);
-              const price = priceMatch ? parseFloat(priceMatch[1].replace('.', '').replace(',', '.')) : null; 
-          
+              const priceText = $('div[data-last-price]').attr('data-last-price');
+              const price = priceText ? parseFloat(priceText.replace(',', '.')) : null;
+                
             resultados.push({
               symbol: ativo.nome,
               shortName: ativo.nome,
