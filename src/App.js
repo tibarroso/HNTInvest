@@ -18,78 +18,55 @@ function Cotacoes({ carteira }) {
         try {
           if (ativo.nome.endsWith("11")) {
             // Buscar preço real do FII no Google Finance
-          //  const url = `https://www.google.com/finance/quote/${ativo.nome}:BVMF`;
-          //  const res = await axios.get(url);
-          //  const $ = cheerio.load(res.data);
+            const url = `https://www.google.com/finance/quote/${ativo.nome}:BVMF`;
 
-            // Extrair preço atual do FII
-         //     const priceText = $('div[data-last-price]').attr('data-last-price');
-       //       const price = priceText ? parseFloat(priceText.replace(',', '.')) : null;
-                
-       //     resultados.push({
-       //       symbol: ativo.nome,
-       //       shortName: ativo.nome,
-      //        regularMarketPrice: price,
-     //         regularMarketChange: null,
-      //        regularMarketChangePercent: null,
-   //          regularMarketDayHigh: null,
-    //          regularMarketDayLow: null,
-    //          priceEarnings: null,
-    //          earningsPerShare: null,
-  //            regularMarketVolume: null,
-    //          logourl: null,
-  //          });
-// Buscar preço real do FII no Google Finance
-const url = `https://www.google.com/finance/quote/${ativo.nome}:BVMF`;
+            try {
+              const res = await axios.get(url);
+              const $ = cheerio.load(res.data);
 
-try {
-  const res = await axios.get(url);
-  const $ = cheerio.load(res.data);
+              // Extrair preço atual do FII
+              const priceText = $('div.YMlKec.fxKbKc').first().text().trim();
 
-  // Extrair preço atual do FII
-  const priceText = $('div.YMlKec.fxKbKc').first().text().trim();
+              // Se não encontrar preço, price será null
+              const price = priceText
+                ? parseFloat(
+                    priceText
+                      .replace('R$', '')     // Remove símbolo R$
+                      .replace(/\./g, '')    // Remove pontos de milhar
+                      .replace(',', '.')     // Troca vírgula decimal por ponto
+                      .trim()
+                  )
+                : null;
 
-  // Se não encontrar preço, price será null
-  const price = priceText
-    ? parseFloat(
-        priceText
-          .replace('R$', '')     // Remove símbolo R$
-          .replace(/\./g, '')    // Remove pontos de milhar
-          .replace(',', '.')     // Troca vírgula decimal por ponto
-          .trim()
-      )
-    : null;
-
-  resultados.push({
-    symbol: ativo.nome,
-    shortName: ativo.nome,
-    regularMarketPrice: price,
-    regularMarketChange: null,
-    regularMarketChangePercent: null,
-    regularMarketDayHigh: null,
-    regularMarketDayLow: null,
-    priceEarnings: null,
-    earningsPerShare: null,
-    regularMarketVolume: null,
-    logourl: null,
-  });
-
-} catch (error) {
-  console.error(`Erro ao buscar preço para ${ativo.nome}:`, error);
-  resultados.push({
-    symbol: ativo.nome,
-    shortName: ativo.nome,
-    regularMarketPrice: null,
-    regularMarketChange: null,
-    regularMarketChangePercent: null,
-    regularMarketDayHigh: null,
-    regularMarketDayLow: null,
-    priceEarnings: null,
-    earningsPerShare: null,
-    regularMarketVolume: null,
-    logourl: null,
-  });
-}        
+              resultados.push({
+                symbol: ativo.nome,
+                shortName: ativo.nome,
+                regularMarketPrice: price,
+                regularMarketChange: null,
+                regularMarketChangePercent: null,
+                regularMarketDayHigh: null,
+                regularMarketDayLow: null,
+                priceEarnings: null,
+                earningsPerShare: null,
+                regularMarketVolume: null,
+                logourl: null,
+              });
+            } catch (error) {
+              console.error(`Erro ao buscar preço para ${ativo.nome}:`, error);
+              resultados.push({
+                symbol: ativo.nome,
+                shortName: ativo.nome,
+                regularMarketPrice: null,
+                regularMarketChange: null,
+                regularMarketChangePercent: null,
+                regularMarketDayHigh: null,
+                regularMarketDayLow: null,
+                priceEarnings: null,
+                earningsPerShare: null,
+                regularMarketVolume: null,
+                logourl: null,
+              });
+            }
           } else {
             // Ações via brapi.dev
             const res = await axios.get(`https://brapi.dev/api/quote/${ativo.nome}`);
@@ -194,7 +171,12 @@ function Proventos({ carteira }) {
           <h3 className="font-semibold">{mes}</h3>
           <ul>
             {lista.map((p, i) => (
-              <li key={i} className={`border-b py-1 ${p.isFII ? "bg-yellow-100 text-gray-800" : "bg-white text-gray-900"}`}>
+              <li
+                key={i}
+                className={`border-b py-1 ${
+                  p.isFII ? "bg-yellow-100 text-gray-800" : "bg-white text-gray-900"
+                }`}
+              >
                 {p.ticker} → R$ {p.valor} (pagamento {p.pagamento})
               </li>
             ))}
@@ -220,13 +202,19 @@ function App() {
   }, [carteira]);
 
   const adicionarAcao = () => {
-    if (novaAcao.trim() && !carteira.some(a => a.nome === novaAcao.trim().toUpperCase())) {
-      setCarteira([...carteira, {
-        nome: novaAcao.trim().toUpperCase(),
-        qtComprada: 1,
-        dtCompra: new Date().toLocaleDateString("pt-BR"),
-        monitorar: true
-      }]);
+    if (
+      novaAcao.trim() &&
+      !carteira.some((a) => a.nome === novaAcao.trim().toUpperCase())
+    ) {
+      setCarteira([
+        ...carteira,
+        {
+          nome: novaAcao.trim().toUpperCase(),
+          qtComprada: 1,
+          dtCompra: new Date().toLocaleDateString("pt-BR"),
+          monitorar: true,
+        },
+      ]);
       setNovaAcao("");
     }
   };
@@ -271,29 +259,61 @@ function App() {
                 className="flex-1 p-2 border rounded"
                 value={novaAcao}
                 onChange={(e) => setNovaAcao(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && adicionarAcao()}
+                onKeyDown={(e) => e.key === "Enter" && adicionarAcao()}
               />
-              <button className="px-4 py-2 bg-blue-600 text-white rounded" onClick={adicionarAcao}>Adicionar</button>
+              <button
+                className="px-4 py-2 bg-blue-600 text-white rounded"
+                onClick={adicionarAcao}
+              >
+                Adicionar
+              </button>
             </div>
 
-            {carteira.length === 0 && <p className="text-gray-600">Nenhum ativo na carteira.</p>}
+            {carteira.length === 0 && (
+              <p className="text-gray-600">Nenhum ativo na carteira.</p>
+            )}
 
             <ul className="space-y-2">
               {carteira.map((acao, index) => (
-                <li key={index} className={`flex justify-between items-center p-2 rounded shadow ${acao.nome.endsWith("11") ? "bg-yellow-100 text-gray-800" : "bg-white text-gray-900"}`}>
+                <li
+                  key={index}
+                  className={`flex justify-between items-center p-2 rounded shadow ${
+                    acao.nome.endsWith("11")
+                      ? "bg-yellow-100 text-gray-800"
+                      : "bg-white text-gray-900"
+                  }`}
+                >
                   <div className="flex flex-col gap-1">
                     <span className="font-semibold">
                       {acao.nome} • Qt:
-                      <input type="number" min="1" step="1" value={acao.qtComprada} onChange={(e) => atualizarQt(index, parseInt(e.target.value))} className="ml-1 w-16 p-1 border rounded" />
+                      <input
+                        type="number"
+                        min="1"
+                        step="1"
+                        value={acao.qtComprada}
+                        onChange={(e) =>
+                          atualizarQt(index, parseInt(e.target.value))
+                        }
+                        className="ml-1 w-16 p-1 border rounded"
+                      />{" "}
                       • Dt: {acao.dtCompra}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <label className="flex items-center gap-1">
-                      <input type="checkbox" checked={acao.monitorar} onChange={() => toggleMonitorar(index)} />
+                      <input
+                        type="checkbox"
+                        checked={acao.monitorar}
+                        onChange={() => toggleMonitorar(index)}
+                      />
                       Monitorar
                     </label>
-                    <button className="text-red-500 font-bold" onClick={() => removerAcao(index)}>✕</button>
+                    <button
+                      className="text-red-500 font-bold"
+                      onClick={() => removerAcao(index)}
+                    >
+                      ✕
+                    </button>
                   </div>
                 </li>
               ))}
