@@ -14,31 +14,16 @@ function Cotacoes({ carteira }) {
       const resultados = [];
       for (const ativo of carteira) {
         try {
-          let res;
           if (ativo.nome.endsWith("11")) { // Detecta FIIs
-            // Buscar FII no ClubeFII via proxy para contornar CORS
-            res = await axios.get(
-              `https://api.allorigins.win/get?url=${encodeURIComponent(`https://www.clubefii.com.br/fiis/${ativo.nome}`)}`
-            );
-            const html = res.data.contents;
-
-            // Extrair informações básicas do HTML
-            const nomeMatch = html.match(/<h1[^>]*>(.*?)<\/h1>/);
-            const precoMatch = html.match(/Última Cotação.*?R\$\s*([\d,.]+)/);
-            const variacaoMatch = html.match(/Variação Dia.*?([\-\d,.]+)%/);
-
-            const nome = nomeMatch ? nomeMatch[1].trim() : ativo.nome;
-            const preco = precoMatch ? parseFloat(precoMatch[1].replace(".", "").replace(",", ".")) : null;
-            const variacao = variacaoMatch ? parseFloat(variacaoMatch[1].replace(",", ".")) : null;
-
+            // Cotação simulada (substitua por API real se desejar)
             resultados.push({
               symbol: ativo.nome,
-              shortName: nome,
-              regularMarketPrice: preco,
-              regularMarketChange: variacao,
-              regularMarketChangePercent: variacao,
-              regularMarketDayHigh: null,
-              regularMarketDayLow: null,
+              shortName: ativo.nome,
+              regularMarketPrice: 100, // valor simulado
+              regularMarketChange: 0.5, // valor simulado
+              regularMarketChangePercent: 0.5, // valor simulado
+              regularMarketDayHigh: 101,
+              regularMarketDayLow: 99,
               priceEarnings: null,
               earningsPerShare: null,
               regularMarketVolume: null,
@@ -46,7 +31,7 @@ function Cotacoes({ carteira }) {
             });
           } else {
             // Ações via brapi.dev
-            res = await axios.get(`https://brapi.dev/api/quote/${ativo.nome}`);
+            const res = await axios.get(`https://brapi.dev/api/quote/${ativo.nome}`);
             const r = res.data.results[0];
             resultados.push(r);
           }
@@ -99,34 +84,30 @@ function Proventos({ carteira }) {
   useEffect(() => {
     const fetchProventos = async () => {
       const dados = {};
+
       for (const a of carteira) {
         try {
-          let res;
           if (a.nome.endsWith("11")) { // FIIs
-            res = await axios.get(
-              `https://api.allorigins.win/get?url=${encodeURIComponent(`https://www.clubefii.com.br/fiis/${a.nome}/dividendos`)}`
-            );
-            const html = res.data.contents;
+            // Dividendos simulados (substitua pelos reais)
+            const dividendosSimulados = [
+              { paymentDate: "2025-09-29", value: 0.50 },
+              { paymentDate: "2025-10-30", value: 0.52 },
+            ];
 
-            // Extrair dividendos do HTML
-            const regex = /<tr>.*?<td[^>]*>([\d/]+)<\/td>.*?<td[^>]*>R\$\s*([\d,.]+)<\/td>/g;
-            let match;
-            while ((match = regex.exec(html)) !== null) {
-              const pagamento = match[1];
-              const valor = parseFloat(match[2].replace(".", "").replace(",", "."));
-              const mes = new Date(pagamento.split("/").reverse().join("-")).toLocaleDateString("pt-BR", { month: "2-digit", year: "numeric" });
-
+            dividendosSimulados.forEach(d => {
+              const mes = new Date(d.paymentDate).toLocaleDateString("pt-BR", { month: "2-digit", year: "numeric" });
               if (!dados[mes]) dados[mes] = [];
               dados[mes].push({
                 ticker: a.nome,
-                valor: (valor * (a.qtComprada || 1)).toFixed(2),
-                pagamento,
+                valor: (d.value * (a.qtComprada || 1)).toFixed(2),
+                pagamento: d.paymentDate,
                 isFII: true
               });
-            }
+            });
+
           } else {
             // Ações via brapi.dev
-            res = await axios.get(`https://brapi.dev/api/quote/${a.nome}?modules=dividends`);
+            const res = await axios.get(`https://brapi.dev/api/quote/${a.nome}?modules=dividends`);
             const r = res.data.results[0];
             let dividendos = r.dividendsData?.cashDividends || [];
             dividendos.forEach(d => {
