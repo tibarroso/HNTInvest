@@ -38,7 +38,7 @@ function Cotacoes({ carteira }) {
     //          earningsPerShare: null,
   //            regularMarketVolume: null,
     //          logourl: null,
-            });
+  //          });
 // Buscar preço real do FII no Google Finance
 const url = `https://www.google.com/finance/quote/${ativo.nome}:BVMF`;
 
