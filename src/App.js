@@ -15,23 +15,37 @@ function Cotacoes({ carteira }) {
       for (const ativo of carteira) {
         try {
           let res;
-          if (ativo.nome.includes("FII")) {
-            res = await axios.get(`https://api.fundsexplorer.com.br/funds/${ativo.nome}`);
-            const r = res.data;
+          if (ativo.nome.endsWith("11")) { // Detecta FIIs
+            // Buscar FII no ClubeFII via proxy para contornar CORS
+            res = await axios.get(
+              `https://api.allorigins.win/get?url=${encodeURIComponent(`https://www.clubefii.com.br/fiis/${ativo.nome}`)}`
+            );
+            const html = res.data.contents;
+
+            // Extrair informações básicas do HTML
+            const nomeMatch = html.match(/<h1[^>]*>(.*?)<\/h1>/);
+            const precoMatch = html.match(/Última Cotação.*?R\$\s*([\d,.]+)/);
+            const variacaoMatch = html.match(/Variação Dia.*?([\-\d,.]+)%/);
+
+            const nome = nomeMatch ? nomeMatch[1].trim() : ativo.nome;
+            const preco = precoMatch ? parseFloat(precoMatch[1].replace(".", "").replace(",", ".")) : null;
+            const variacao = variacaoMatch ? parseFloat(variacaoMatch[1].replace(",", ".")) : null;
+
             resultados.push({
               symbol: ativo.nome,
-              shortName: r.name,
-              regularMarketPrice: r.last_price,
-              regularMarketChange: r.variation,
-              regularMarketChangePercent: r.variation,
-              regularMarketDayHigh: r.max_price,
-              regularMarketDayLow: r.min_price,
+              shortName: nome,
+              regularMarketPrice: preco,
+              regularMarketChange: variacao,
+              regularMarketChangePercent: variacao,
+              regularMarketDayHigh: null,
+              regularMarketDayLow: null,
               priceEarnings: null,
               earningsPerShare: null,
               regularMarketVolume: null,
-              logourl: null
+              logourl: null,
             });
           } else {
+            // Ações via brapi.dev
             res = await axios.get(`https://brapi.dev/api/quote/${ativo.nome}`);
             const r = res.data.results[0];
             resultados.push(r);
@@ -45,14 +59,14 @@ function Cotacoes({ carteira }) {
     };
 
     fetchCotacoes();
-    const interval = setInterval(fetchCotacoes, 30000);
+    const interval = setInterval(fetchCotacoes, 30000); // Atualiza a cada 30s
     return () => clearInterval(interval);
   }, [carteira]);
 
   if (dados.length === 0) return <p>Nenhuma cotação para mostrar.</p>;
 
   return (
-    <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+    <div className="main-grid">
       {dados.map((stock) => {
         const changeClass = stock.regularMarketChange >= 0 ? "up" : "down";
         const changeSign = stock.regularMarketChange >= 0 ? "+" : "";
@@ -88,20 +102,30 @@ function Proventos({ carteira }) {
       for (const a of carteira) {
         try {
           let res;
-          if (a.nome.includes("FII")) {
-            res = await axios.get(`https://api.fundsexplorer.com.br/funds/${a.nome}/dividends`);
-            const dividendos = res.data || [];
-            dividendos.forEach(d => {
-              const mes = new Date(d.payment_date).toLocaleDateString("pt-BR", { month: "2-digit", year: "numeric" });
+          if (a.nome.endsWith("11")) { // FIIs
+            res = await axios.get(
+              `https://api.allorigins.win/get?url=${encodeURIComponent(`https://www.clubefii.com.br/fiis/${a.nome}/dividendos`)}`
+            );
+            const html = res.data.contents;
+
+            // Extrair dividendos do HTML
+            const regex = /<tr>.*?<td[^>]*>([\d/]+)<\/td>.*?<td[^>]*>R\$\s*([\d,.]+)<\/td>/g;
+            let match;
+            while ((match = regex.exec(html)) !== null) {
+              const pagamento = match[1];
+              const valor = parseFloat(match[2].replace(".", "").replace(",", "."));
+              const mes = new Date(pagamento.split("/").reverse().join("-")).toLocaleDateString("pt-BR", { month: "2-digit", year: "numeric" });
+
               if (!dados[mes]) dados[mes] = [];
               dados[mes].push({
                 ticker: a.nome,
-                valor: (d.value * (a.qtComprada || 1)).toFixed(2),
-                pagamento: d.payment_date,
+                valor: (valor * (a.qtComprada || 1)).toFixed(2),
+                pagamento,
                 isFII: true
               });
-            });
+            }
           } else {
+            // Ações via brapi.dev
             res = await axios.get(`https://brapi.dev/api/quote/${a.nome}?modules=dividends`);
             const r = res.data.results[0];
             let dividendos = r.dividendsData?.cashDividends || [];
@@ -222,7 +246,7 @@ function App() {
 
             <ul className="space-y-2">
               {carteira.map((acao, index) => (
-                <li key={index} className={`flex justify-between items-center p-2 rounded shadow ${acao.nome.includes("FII") ? "bg-yellow-100 text-gray-800" : "bg-white text-gray-900"}`}>
+                <li key={index} className={`flex justify-between items-center p-2 rounded shadow ${acao.nome.endsWith("11") ? "bg-yellow-100 text-gray-800" : "bg-white text-gray-900"}`}>
                   <div className="flex flex-col gap-1">
                     <span className="font-semibold">
                       {acao.nome} • Qt:
